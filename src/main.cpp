@@ -2,7 +2,6 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <DICOMLoader.h>
 
 
@@ -20,5 +19,6 @@ int main() {
 		return 1;
 	}
 
+	std::cout << "Finished processing DICOM files." << std::endl;
     return 0;
 }
