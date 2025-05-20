@@ -11,7 +11,7 @@ struct VolumeData {
 };
 
 
-/* redefini 
+// redefini 
 struct Volume3D {
     std::vector<float> voxels; // 1D layout: x + y*width + z*width*height
     int width, height, depth;
@@ -28,7 +28,6 @@ struct Volume3D {
         voxels[x + y * width + z * width * height] = val;
     }
 };
-*/
 
 class DICOMLoader {
 public:

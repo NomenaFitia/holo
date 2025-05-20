@@ -46,8 +46,6 @@ VolumeData DICOMLoader::loadFromDirectory(const std::string& directoryPath) {
                         }
                     }
                 }
-
-				// Get the slice location
             }
         }
     }
