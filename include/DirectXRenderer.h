@@ -1,7 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include <vector>
-#include "MarchingCubes.h"  // Pour la structure Vertex
+#include "MarchingCubes.h"
 
 class DirectXRenderer {
     ID3D11Device* device;
