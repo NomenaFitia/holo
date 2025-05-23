@@ -1,27 +1,22 @@
 #pragma once
 #include <DirectXMath.h>
+#include <DICOMLoader.h>
 #include <vector>
-#include "Volume.h"
+#include <string>
 
-struct Vertex {
-    DirectX::XMFLOAT3 position;
-    DirectX::XMFLOAT3 normal;
-    DirectX::XMFLOAT3 color;
+struct Triangle {
+    float v1[3];
+    float v2[3];
+    float v3[3];
 };
 
 class MarchingCubes {
 public:
-    MarchingCubes(const Volume& volume, float isovalue);
-
-    const std::vector<Vertex>& getVertices() const { return m_vertices; }
-    void generateSurface();
+    static std::vector<Triangle> generateSurface(const VolumeData& volumeData, uint16_t isovalue);
+    static void saveToObj(const std::vector<Triangle>& triangles, const std::string& filename);
 
 private:
-    void processCube(int x, int y, int z);
-    DirectX::XMFLOAT3 interpolateVertex(const DirectX::XMFLOAT3& p1, const DirectX::XMFLOAT3& p2, float val1, float val2) const;
-    DirectX::XMFLOAT3 calculateNormal(const DirectX::XMFLOAT3& p1, const DirectX::XMFLOAT3& p2, const DirectX::XMFLOAT3& p3) const;
-
-    const Volume& m_volume;
-    float m_isovalue;
-    std::vector<Vertex> m_vertices;
+    static float interpolate(float val1, float val2, uint16_t isovalue, float x1, float x2);
+    static uint8_t computeCubeIndex(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue);
+    static void processCube(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue, std::vector<Triangle>& triangles);
 };

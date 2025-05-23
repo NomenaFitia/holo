@@ -3,7 +3,7 @@
 #include <string>
 
 struct VolumeData {
-    std::vector<uint16_t> voxels;
+	std::vector<uint16_t> voxels; // tableau 1 D des valeurs de voxels (with * height * depth)
     int width;
     int height;
     int depth;

@@ -1,124 +1,171 @@
 #include "MarchingCubes.h"
-#include <DirectXMath.h>
 #include "tables.h"
+#include <fstream>
+#include <cmath>
+#include <algorithm>
 
-MarchingCubes::MarchingCubes(const Volume& volume, float isovalue)
-    : m_volume(volume), m_isovalue(isovalue) {
+float MarchingCubes::interpolate(float val1, float val2, uint16_t isovalue, float x1, float x2) {
+    if (std::abs(isovalue - val1) < 0.00001f) return x1;
+    if (std::abs(isovalue - val2) < 0.00001f) return x2;
+    if (std::abs(val1 - val2) < 0.00001f) return x1;
+    return x1 + (isovalue - val1) * (x2 - x1) / (val2 - val1);
 }
 
-void MarchingCubes::generateSurface() {
-    m_vertices.clear();
+uint8_t MarchingCubes::computeCubeIndex(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue) {
+    uint8_t cubeIndex = 0;
 
-    for (int z = 0; z < m_volume.depth() - 1; z++) {
-        for (int y = 0; y < m_volume.height() - 1; y++) {
-            for (int x = 0; x < m_volume.width() - 1; x++) {
-                processCube(x, y, z);
+    if (x >= volumeData.width - 1 || y >= volumeData.height - 1 || z >= volumeData.depth - 1) {
+        return 0;
+    }
+
+    uint16_t values[8];
+    values[0] = volumeData.voxels[x + y * volumeData.width + z * volumeData.width * volumeData.height];
+    values[1] = volumeData.voxels[(x + 1) + y * volumeData.width + z * volumeData.width * volumeData.height];
+    values[2] = volumeData.voxels[(x + 1) + (y + 1) * volumeData.width + z * volumeData.width * volumeData.height];
+    values[3] = volumeData.voxels[x + (y + 1) * volumeData.width + z * volumeData.width * volumeData.height];
+    values[4] = volumeData.voxels[x + y * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[5] = volumeData.voxels[(x + 1) + y * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[6] = volumeData.voxels[(x + 1) + (y + 1) * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[7] = volumeData.voxels[x + (y + 1) * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+
+    for (int i = 0; i < 8; ++i) {
+        if (values[i] < isovalue) {
+            cubeIndex |= (1 << i);
+        }
+    }
+
+    return cubeIndex;
+}
+
+void MarchingCubes::processCube(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue, std::vector<Triangle>& triangles) {
+
+    uint8_t cubeIndex = computeCubeIndex(volumeData, x, y, z, isovalue);
+    int edges = edgeTable[cubeIndex];
+
+    if (edges == 0) {
+        return;
+    }
+
+    uint16_t values[8];
+    values[0] = volumeData.voxels[x + y * volumeData.width + z * volumeData.width * volumeData.height];
+    values[1] = volumeData.voxels[(x + 1) + y * volumeData.width + z * volumeData.width * volumeData.height];
+    values[2] = volumeData.voxels[(x + 1) + (y + 1) * volumeData.width + z * volumeData.width * volumeData.height];
+    values[3] = volumeData.voxels[x + (y + 1) * volumeData.width + z * volumeData.width * volumeData.height];
+    values[4] = volumeData.voxels[x + y * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[5] = volumeData.voxels[(x + 1) + y * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[6] = volumeData.voxels[(x + 1) + (y + 1) * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+    values[7] = volumeData.voxels[x + (y + 1) * volumeData.width + (z + 1) * volumeData.width * volumeData.height];
+
+    float vertices[12][3];
+
+    if (edges & 0x001) {
+        vertices[0][0] = x + interpolate(values[0], values[1], isovalue, 0.0f, 1.0f);
+        vertices[0][1] = y;
+        vertices[0][2] = z;
+    }
+    if (edges & 0x002) {
+        vertices[1][0] = x + 1;
+        vertices[1][1] = y + interpolate(values[1], values[2], isovalue, 0.0f, 1.0f);
+        vertices[1][2] = z;
+    }
+    if (edges & 0x004) {
+        vertices[2][0] = x + interpolate(values[3], values[2], isovalue, 0.0f, 1.0f);
+        vertices[2][1] = y + 1;
+        vertices[2][2] = z;
+    }
+    if (edges & 0x008) {
+        vertices[3][0] = x;
+        vertices[3][1] = y + interpolate(values[0], values[3], isovalue, 0.0f, 1.0f);
+        vertices[3][2] = z;
+    }
+    if (edges & 0x010) {
+        vertices[4][0] = x + interpolate(values[4], values[5], isovalue, 0.0f, 1.0f);
+        vertices[4][1] = y;
+        vertices[4][2] = z + 1;
+    }
+    if (edges & 0x020) {
+        vertices[5][0] = x + 1;
+        vertices[5][1] = y + interpolate(values[5], values[6], isovalue, 0.0f, 1.0f);
+        vertices[5][2] = z + 1;
+    }
+    if (edges & 0x040) {
+        vertices[6][0] = x + interpolate(values[7], values[6], isovalue, 0.0f, 1.0f);
+        vertices[6][1] = y + 1;
+        vertices[6][2] = z + 1;
+    }
+    if (edges & 0x080) {
+        vertices[7][0] = x;
+        vertices[7][1] = y + interpolate(values[4], values[7], isovalue, 0.0f, 1.0f);
+        vertices[7][2] = z + 1;
+    }
+    if (edges & 0x100) {
+        vertices[8][0] = x;
+        vertices[8][1] = y;
+        vertices[8][2] = z + interpolate(values[0], values[4], isovalue, 0.0f, 1.0f);
+    }
+    if (edges & 0x200) {
+        vertices[9][0] = x + 1;
+        vertices[9][1] = y;
+        vertices[9][2] = z + interpolate(values[1], values[5], isovalue, 0.0f, 1.0f);
+    }
+    if (edges & 0x400) {
+        vertices[10][0] = x + 1;
+        vertices[10][1] = y + 1;
+        vertices[10][2] = z + interpolate(values[2], values[6], isovalue, 0.0f, 1.0f);
+    }
+    if (edges & 0x800) {
+        vertices[11][0] = x;
+        vertices[11][1] = y + 1;
+        vertices[11][2] = z + interpolate(values[3], values[7], isovalue, 0.0f, 1.0f);
+    }
+
+    for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
+        Triangle triangle;
+        int v0 = triTable[cubeIndex][i];
+        int v1 = triTable[cubeIndex][i + 1];
+        int v2 = triTable[cubeIndex][i + 2];
+
+        for (int j = 0; j < 3; j++) {
+            triangle.v1[j] = vertices[v0][j];
+            triangle.v2[j] = vertices[v1][j];
+            triangle.v3[j] = vertices[v2][j];
+        }
+
+        triangles.push_back(triangle);
+    }
+}
+
+std::vector<Triangle> MarchingCubes::generateSurface(const VolumeData& volumeData, uint16_t isovalue) {
+    std::vector<Triangle> triangles;
+
+    for (int z = 0; z < volumeData.depth - 1; ++z) {
+        for (int y = 0; y < volumeData.height - 1; ++y) {
+            for (int x = 0; x < volumeData.width - 1; ++x) {
+                processCube(volumeData, x, y, z, isovalue, triangles);
             }
         }
     }
+
+    return triangles;
 }
 
-void MarchingCubes::processCube(int x, int y, int z) {
-    // Récupérer les valeurs des 8 sommets du cube
-    float cubeValues[8]{};
-    cubeValues[0] = m_volume.getVoxel(x, y, z);
-    cubeValues[1] = m_volume.getVoxel(x + 1, y, z);
-    cubeValues[2] = m_volume.getVoxel(x + 1, y, z + 1);
-    cubeValues[3] = m_volume.getVoxel(x, y, z + 1);
-    cubeValues[4] = m_volume.getVoxel(x, y + 1, z);
-    cubeValues[5] = m_volume.getVoxel(x + 1, y + 1, z);
-    cubeValues[6] = m_volume.getVoxel(x + 1, y + 1, z + 1);
-    cubeValues[7] = m_volume.getVoxel(x, y + 1, z + 1);
-
-    // Déterminer l'index du cas
-    int cubeIndex = 0;
-    if (cubeValues[0] < m_isovalue) cubeIndex |= 1;
-    if (cubeValues[1] < m_isovalue) cubeIndex |= 2;
-    if (cubeValues[2] < m_isovalue) cubeIndex |= 4;
-    if (cubeValues[3] < m_isovalue) cubeIndex |= 8;
-    if (cubeValues[4] < m_isovalue) cubeIndex |= 16;
-    if (cubeValues[5] < m_isovalue) cubeIndex |= 32;
-    if (cubeValues[6] < m_isovalue) cubeIndex |= 64;
-    if (cubeValues[7] < m_isovalue) cubeIndex |= 128;
-
-    if (edgeTable[cubeIndex] == 0) return;
-
-    // Positions des sommets du cube
-    DirectX::XMFLOAT3 cubeVertices[8] = {
-        DirectX::XMFLOAT3(x,   y,   z),
-        DirectX::XMFLOAT3(x + 1, y,   z),
-        DirectX::XMFLOAT3(x + 1, y,   z + 1),
-        DirectX::XMFLOAT3(x,   y,   z + 1),
-        DirectX::XMFLOAT3(x,   y + 1, z),
-        DirectX::XMFLOAT3(x + 1, y + 1, z),
-        DirectX::XMFLOAT3(x + 1, y + 1, z + 1),
-        DirectX::XMFLOAT3(x,   y + 1, z + 1)
-    };
-
-    // Calculer les vertices d'intersection
-    DirectX::XMFLOAT3 vertices[12];
-    if (edgeTable[cubeIndex] & 1)    vertices[0] = interpolateVertex(cubeVertices[0], cubeVertices[1], cubeValues[0], cubeValues[1]);
-    if (edgeTable[cubeIndex] & 2)    vertices[1] = interpolateVertex(cubeVertices[1], cubeVertices[2], cubeValues[1], cubeValues[2]);
-    if (edgeTable[cubeIndex] & 4)    vertices[2] = interpolateVertex(cubeVertices[2], cubeVertices[3], cubeValues[2], cubeValues[3]);
-    if (edgeTable[cubeIndex] & 8)    vertices[3] = interpolateVertex(cubeVertices[3], cubeVertices[0], cubeValues[3], cubeValues[0]);
-    if (edgeTable[cubeIndex] & 16)   vertices[4] = interpolateVertex(cubeVertices[4], cubeVertices[5], cubeValues[4], cubeValues[5]);
-    if (edgeTable[cubeIndex] & 32)   vertices[5] = interpolateVertex(cubeVertices[5], cubeVertices[6], cubeValues[5], cubeValues[6]);
-    if (edgeTable[cubeIndex] & 64)   vertices[6] = interpolateVertex(cubeVertices[6], cubeVertices[7], cubeValues[6], cubeValues[7]);
-    if (edgeTable[cubeIndex] & 128)  vertices[7] = interpolateVertex(cubeVertices[7], cubeVertices[4], cubeValues[7], cubeValues[4]);
-    if (edgeTable[cubeIndex] & 256)  vertices[8] = interpolateVertex(cubeVertices[0], cubeVertices[4], cubeValues[0], cubeValues[4]);
-    if (edgeTable[cubeIndex] & 512)  vertices[9] = interpolateVertex(cubeVertices[1], cubeVertices[5], cubeValues[1], cubeValues[5]);
-    if (edgeTable[cubeIndex] & 1024) vertices[10] = interpolateVertex(cubeVertices[2], cubeVertices[6], cubeValues[2], cubeValues[6]);
-    if (edgeTable[cubeIndex] & 2048) vertices[11] = interpolateVertex(cubeVertices[3], cubeVertices[7], cubeValues[3], cubeValues[7]);
-
-    // Créer les triangles
-    for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
-        Vertex v1, v2, v3;
-        v1.position = vertices[triTable[cubeIndex][i]];
-        v2.position = vertices[triTable[cubeIndex][i + 1]];
-        v3.position = vertices[triTable[cubeIndex][i + 2]];
-
-        // Calculer la normale
-        DirectX::XMFLOAT3 normal = calculateNormal(v1.position, v2.position, v3.position);
-        v1.normal = v2.normal = v3.normal = normal;
-
-        // Déterminer la couleur basée sur la position
-        float r = (v1.position.x + v2.position.x + v3.position.x) / (3.0f * m_volume.width());
-        float g = (v1.position.y + v2.position.y + v3.position.y) / (3.0f * m_volume.height());
-        float b = (v1.position.z + v2.position.z + v3.position.z) / (3.0f * m_volume.depth());
-
-        v1.color = v2.color = v3.color = DirectX::XMFLOAT3(r, g, b);
-
-        m_vertices.push_back(v1);
-        m_vertices.push_back(v2);
-        m_vertices.push_back(v3);
+void MarchingCubes::saveToObj(const std::vector<Triangle>& triangles, const std::string& filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
     }
-}
 
-DirectX::XMFLOAT3 MarchingCubes::interpolateVertex(const DirectX::XMFLOAT3& p1, const DirectX::XMFLOAT3& p2, float val1, float val2) const {
-    if (std::abs(m_isovalue - val1) < 0.00001f) return p1;
-    if (std::abs(m_isovalue - val2) < 0.00001f) return p2;
-    if (std::abs(val1 - val2) < 0.00001f) return p1;
+    // vertices
+    for (const auto& triangle : triangles) {
+        file << "v " << triangle.v1[0] << " " << triangle.v1[1] << " " << triangle.v1[2] << "\n";
+        file << "v " << triangle.v2[0] << " " << triangle.v2[1] << " " << triangle.v2[2] << "\n";
+        file << "v " << triangle.v3[0] << " " << triangle.v3[1] << " " << triangle.v3[2] << "\n";
+    }
 
-    float mu = (m_isovalue - val1) / (val2 - val1);
-    return DirectX::XMFLOAT3(
-        p1.x + mu * (p2.x - p1.x),
-        p1.y + mu * (p2.y - p1.y),
-        p1.z + mu * (p2.z - p1.z)
-    );
-}
+    // faces
+    for (size_t i = 0; i < triangles.size(); ++i) {
+        file << "f " << 3 * i + 1 << " " << 3 * i + 2 << " " << 3 * i + 3 << "\n";
+    }
 
-DirectX::XMFLOAT3 MarchingCubes::calculateNormal(const DirectX::XMFLOAT3& p1, const DirectX::XMFLOAT3& p2, const DirectX::XMFLOAT3& p3) const {
-    using namespace DirectX;
-
-    XMVECTOR v1 = XMLoadFloat3(&p1);
-    XMVECTOR v2 = XMLoadFloat3(&p2);
-    XMVECTOR v3 = XMLoadFloat3(&p3);
-
-    XMVECTOR edge1 = v2 - v1;
-    XMVECTOR edge2 = v3 - v1;
-    XMVECTOR normal = XMVector3Normalize(XMVector3Cross(edge1, edge2));
-
-    DirectX::XMFLOAT3 result;
-    XMStoreFloat3(&result, normal);
-    return result;
+    file.close();
 }

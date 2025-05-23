@@ -15,7 +15,9 @@ int main() {
 		DICOMLoader loader;
 		VolumeData volume = loader.loadFromDirectory(directoryPath);
 
-
+		/*
+		* 
+		* 
 		std::cout << "Loaded volume with dimensions: " << volume.width << " x " << volume.height << " x " << volume.depth << std::endl;
 
 		for (size_t i = 0; i < volume.width * volume.height * volume.depth; i++)
@@ -25,7 +27,12 @@ int main() {
 			}
 		}
 
+		*/
 
+		auto triangles = MarchingCubes::generateSurface(volume, 6500);
+
+		// Sauvegarder en OBJ
+		MarchingCubes::saveToObj(triangles, "output.obj");
 
 	}
 	catch (const std::exception& e) {
