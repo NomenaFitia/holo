@@ -29,7 +29,7 @@ int main() {
 
 		*/
 
-		auto triangles = MarchingCubes::generateSurface(volume, 6500);
+		auto triangles = MarchingCubes::generateSurface(volume, 30000); // confirmation de la valeur d'iso pour le squlette 
 
 		// Sauvegarder en OBJ
 		MarchingCubes::saveToObj(triangles, "output.obj");
