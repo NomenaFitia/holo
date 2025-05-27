@@ -3,6 +3,9 @@
   "version-string": "1.0.0", 
   "dependencies": [            
     "dcmtk",
-    "directxtk"
+    "directxtk",
+    "openxr-loader",
+    "assimp",
+    "tinyobjloader"
   ]
 }

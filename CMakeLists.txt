@@ -13,6 +13,8 @@ endif()
 # Trouver DCMTK et DirectX 11
 find_package(DCMTK REQUIRED)
 find_package(Directxtk REQUIRED)
+find_package(OpenXR REQUIRED)
+find_package(assimp REQUIRED)
 
 # Fichiers sources
 file(GLOB SOURCES "src/*.cpp")
@@ -29,4 +31,7 @@ target_link_libraries(V2 PRIVATE DCMTK::dcmdata
     DCMTK::dcmimgle
     DCMTK::dcmimage
     d3d11.lib 
-    dxgi.lib)
+    dxgi.lib
+    OpenXR::openxr_loader
+    assimp::assimp
+)
