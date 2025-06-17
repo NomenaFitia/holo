@@ -16,7 +16,7 @@ int main()
 		DICOMLoader loader;
 		VolumeData volume = loader.loadFromDirectory(directoryPath);
 
-		auto triangles = MarchingCubes::generateSurface(volume, 30000); // confirmation de la valeur d'iso pour le squlette 
+		auto triangles = MarchingCubes::generateSurface(volume, 30000);
 		//MarchingCubes::saveToObj(triangles, "output.obj");
 
 	}

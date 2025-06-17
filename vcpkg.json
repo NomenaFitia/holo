@@ -6,6 +6,6 @@
     "directxtk",
     "openxr-loader",
     "assimp",
-    "tinyobjloader"
+    "openmesh"
   ]
 }
