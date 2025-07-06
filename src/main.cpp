@@ -18,6 +18,7 @@ int main()
 
 		auto triangles = MarchingCubes::generateSurface(volume, 30000);
 		//MarchingCubes::saveToObj(triangles, "output.obj");
+		MarchingCubes::saveToObjWithNormals(triangles, "outputWithNormals.obj");
 
 	}
 	catch (const std::exception& e) {

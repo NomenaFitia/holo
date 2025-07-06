@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <array>
 
 float MarchingCubes::interpolate(float val1, float val2, uint16_t isovalue, float x1, float x2) {
     if (std::abs(isovalue - val1) < 0.00001f) return x1;
@@ -155,16 +156,80 @@ void MarchingCubes::saveToObj(const std::vector<Triangle>& triangles, const std:
         throw std::runtime_error("Unable to open file: " + filename);
     }
 
-    // vertices
     for (const auto& triangle : triangles) {
         file << "v " << triangle.v1[0] << " " << triangle.v1[1] << " " << triangle.v1[2] << "\n";
         file << "v " << triangle.v2[0] << " " << triangle.v2[1] << " " << triangle.v2[2] << "\n";
         file << "v " << triangle.v3[0] << " " << triangle.v3[1] << " " << triangle.v3[2] << "\n";
     }
 
-    // faces
     for (size_t i = 0; i < triangles.size(); ++i) {
         file << "f " << 3 * i + 1 << " " << 3 * i + 2 << " " << 3 * i + 3 << "\n";
+    }
+
+    file.close();
+}
+
+/*
+
+calcul les normales dans la creation du fichier , a verifier si c'est mieux de calculer dans une autre struct
+
+*/
+void MarchingCubes::saveToObjWithNormals(const std::vector<Triangle>& triangles, const std::string& filename) 
+{
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
+    }
+
+    // Écriture des sommets et calcul des normales
+    std::vector<std::array<float, 3>> normals;
+
+    for (const auto& triangle : triangles) {
+        // Sommets
+        file << "v " << triangle.v1[0] << " " << triangle.v1[1] << " " << triangle.v1[2] << "\n";
+        file << "v " << triangle.v2[0] << " " << triangle.v2[1] << " " << triangle.v2[2] << "\n";
+        file << "v " << triangle.v3[0] << " " << triangle.v3[1] << " " << triangle.v3[2] << "\n";
+
+        // Calcul de la normale
+        float ux = triangle.v2[0] - triangle.v1[0];
+        float uy = triangle.v2[1] - triangle.v1[1];
+        float uz = triangle.v2[2] - triangle.v1[2];
+
+        float vx = triangle.v3[0] - triangle.v1[0];
+        float vy = triangle.v3[1] - triangle.v1[1];
+        float vz = triangle.v3[2] - triangle.v1[2];
+
+        float nx = uy * vz - uz * vy;
+        float ny = uz * vx - ux * vz;
+        float nz = ux * vy - uy * vx;
+
+        float length = std::sqrt(nx * nx + ny * ny + nz * nz);
+        if (length > 0.00001f) {
+            nx /= length;
+            ny /= length;
+            nz /= length;
+        }
+
+        normals.push_back({ nx, ny, nz });
+    }
+
+    // Écriture des normales
+    for (const auto& n : normals) {
+        file << "vn " << n[0] << " " << n[1] << " " << n[2] << "\n";
+    }
+
+    // Écriture des faces avec normales
+    for (size_t i = 0; i < triangles.size(); ++i) {
+        // chaque triangle a 3 sommets et une seule normale
+        int v1 = 3 * i + 1;
+        int v2 = 3 * i + 2;
+        int v3 = 3 * i + 3;
+        int nIndex = i + 1;
+
+        file << "f "
+            << v1 << "//" << nIndex << " "
+            << v2 << "//" << nIndex << " "
+            << v3 << "//" << nIndex << "\n";
     }
 
     file.close();
