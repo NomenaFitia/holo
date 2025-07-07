@@ -1,0 +1,11 @@
+{
+  "name": "holo",
+  "version-string": "1.0.0", 
+  "dependencies": [            
+    "dcmtk",
+    "directxtk",
+    "openxr-loader",
+    "assimp",
+    "openmesh"
+  ]
+}
