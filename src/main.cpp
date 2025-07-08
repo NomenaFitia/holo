@@ -8,13 +8,13 @@
 
 int main() 
 {
-	int width, height, depth;
     std::string directoryPath = "C:\\Users\\MIPA\\Documents\\Projets\\dcm";
 	float isovalue = 0.5f;
+	int leap = 100;
 
     try {
 		DICOMLoader loader;
-		VolumeData volume = loader.loadFromDirectory(directoryPath);
+		VolumeData volume = loader.loadFromDirectoryWithLeap(directoryPath, leap);
 
 		auto triangles = MarchingCubes::generateSurface(volume, 30000);
 		//MarchingCubes::saveToObj(triangles, "output.obj");

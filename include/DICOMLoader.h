@@ -35,5 +35,5 @@ struct Volume3D {
 class DICOMLoader {
 public:
     static VolumeData loadFromDirectory(const std::string& directoryPath);
-	//static Volume3D loadDicomSeries(const std::string& directoryPath);
+    VolumeData loadFromDirectoryWithLeap(const std::string& directoryPath, const int leap);
 };
