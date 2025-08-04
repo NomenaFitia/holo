@@ -8,9 +8,9 @@
 
 int main() 
 {
-    std::string directoryPath = "C:\\Users\\MIPA\\Documents\\Projets\\dcm";
+    std::string directoryPath = "C:\\projects\\dcmfiles";
 	float isovalue = 0.5f;
-	int leap = 100;
+	int leap = 1;
 
     try {
 		DICOMLoader loader;

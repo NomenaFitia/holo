@@ -77,7 +77,7 @@ VolumeData DICOMLoader::loadFromDirectory(const std::string& directoryPath) {
 }
 
 VolumeData DICOMLoader::loadFromDirectoryWithLeap(const std::string& directoryPath, int leap) {
-    if (leap <= 0) {
+    if (leap < 0) {
         throw std::invalid_argument("Leap must be a positive integer.");
     }
 
