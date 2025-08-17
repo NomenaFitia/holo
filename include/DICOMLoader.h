@@ -1,39 +1,35 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <dcmtk/ofstd/ofstring.h>
+
+struct DicomSlice {
+    std::string filename;
+    double position;
+    std::vector<uint16_t> pixels;
+};
+
+struct SliceInfo {
+    std::string path;
+    float positionZ;
+};
+
+struct VoxelSpacing {
+    double x;
+    double y;
+    double z;
+};
 
 struct VolumeData {
-	std::vector<uint16_t> voxels; // tableau 1 D des valeurs de voxels (with * height * depth)
+	std::vector<uint16_t> voxels;
     int width;
     int height;
     int depth;
+	VoxelSpacing spacing;
 };
-
-
-/*
-
-redefini
-struct Volume3D {
-    std::vector<uint16_t> voxels;
-    int width, height, depth;
-
-    float spacingX, spacingY, spacingZ;
-    float originX, originY, originZ;
-    float direction[3][3];
-
-    inline float at(int x, int y, int z) const {
-        return voxels[x + y * width + z * width * height];
-    }
-
-    inline void set(int x, int y, int z, float val) {
-        voxels[x + y * width + z * width * height] = val;
-    }
-};
-
-*/
 
 class DICOMLoader {
 public:
     static VolumeData loadFromDirectory(const std::string& directoryPath);
-    VolumeData loadFromDirectoryWithLeap(const std::string& directoryPath, const int leap);
+    static VolumeData loadFromDirectoryWithLeap(const std::string& directoryPath, const int leap);
 };

@@ -38,7 +38,7 @@ uint8_t MarchingCubes::computeCubeIndex(const VolumeData& volumeData, int x, int
     return cubeIndex;
 }
 
-void MarchingCubes::processCube(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue, std::vector<Triangle>& triangles) {
+void MarchingCubes::processCube(const VolumeData& volumeData, int x, int y, int z, uint16_t isovalue, const VoxelSpacing& spacing, std::vector<Triangle>& triangles) {
 
     uint8_t cubeIndex = computeCubeIndex(volumeData, x, y, z, isovalue);
     int edges = edgeTable[cubeIndex];
@@ -60,64 +60,64 @@ void MarchingCubes::processCube(const VolumeData& volumeData, int x, int y, int 
     float vertices[12][3];
 
     if (edges & 0x001) {
-        vertices[0][0] = x + interpolate(values[0], values[1], isovalue, 0.0f, 1.0f);
-        vertices[0][1] = y;
-        vertices[0][2] = z;
+        vertices[0][0] = (x + interpolate(values[0], values[1], isovalue, 0.0f, 1.0f)) * spacing.x;
+        vertices[0][1] = y * spacing.y;
+        vertices[0][2] = z * spacing.z;
     }
     if (edges & 0x002) {
-        vertices[1][0] = x + 1;
-        vertices[1][1] = y + interpolate(values[1], values[2], isovalue, 0.0f, 1.0f);
-        vertices[1][2] = z;
+        vertices[1][0] = (x + 1) * spacing.x;
+        vertices[1][1] = (y + interpolate(values[1], values[2], isovalue, 0.0f, 1.0f)) * spacing.y;
+        vertices[1][2] = z * spacing.z;
     }
     if (edges & 0x004) {
-        vertices[2][0] = x + interpolate(values[3], values[2], isovalue, 0.0f, 1.0f);
-        vertices[2][1] = y + 1;
-        vertices[2][2] = z;
+        vertices[2][0] = (x + interpolate(values[3], values[2], isovalue, 0.0f, 1.0f)) * spacing.x;
+        vertices[2][1] = (y + 1) * spacing.y;
+        vertices[2][2] = z * spacing.z;
     }
     if (edges & 0x008) {
-        vertices[3][0] = x;
-        vertices[3][1] = y + interpolate(values[0], values[3], isovalue, 0.0f, 1.0f);
-        vertices[3][2] = z;
+        vertices[3][0] = x * spacing.x;
+        vertices[3][1] = (y + interpolate(values[0], values[3], isovalue, 0.0f, 1.0f)) * spacing.y;
+        vertices[3][2] = z * spacing.z;
     }
     if (edges & 0x010) {
-        vertices[4][0] = x + interpolate(values[4], values[5], isovalue, 0.0f, 1.0f);
-        vertices[4][1] = y;
-        vertices[4][2] = z + 1;
+        vertices[4][0] = (x + interpolate(values[4], values[5], isovalue, 0.0f, 1.0f)) * spacing.x;
+        vertices[4][1] = y * spacing.y;
+        vertices[4][2] = (z + 1) * spacing.z;
     }
     if (edges & 0x020) {
-        vertices[5][0] = x + 1;
-        vertices[5][1] = y + interpolate(values[5], values[6], isovalue, 0.0f, 1.0f);
-        vertices[5][2] = z + 1;
+        vertices[5][0] = (x + 1) * spacing.x;
+        vertices[5][1] = (y + interpolate(values[5], values[6], isovalue, 0.0f, 1.0f)) * spacing.y;
+        vertices[5][2] = (z + 1) * spacing.z;
     }
     if (edges & 0x040) {
-        vertices[6][0] = x + interpolate(values[7], values[6], isovalue, 0.0f, 1.0f);
-        vertices[6][1] = y + 1;
-        vertices[6][2] = z + 1;
+        vertices[6][0] = (x + interpolate(values[7], values[6], isovalue, 0.0f, 1.0f)) * spacing.x;
+        vertices[6][1] = (y + 1) * spacing.y;
+        vertices[6][2] = (z + 1) * spacing.z;
     }
     if (edges & 0x080) {
-        vertices[7][0] = x;
-        vertices[7][1] = y + interpolate(values[4], values[7], isovalue, 0.0f, 1.0f);
-        vertices[7][2] = z + 1;
+        vertices[7][0] = x * spacing.x;
+        vertices[7][1] = (y + interpolate(values[4], values[7], isovalue, 0.0f, 1.0f)) * spacing.y;
+        vertices[7][2] = (z + 1) * spacing.z;
     }
     if (edges & 0x100) {
-        vertices[8][0] = x;
-        vertices[8][1] = y;
-        vertices[8][2] = z + interpolate(values[0], values[4], isovalue, 0.0f, 1.0f);
+        vertices[8][0] = x * spacing.x;
+        vertices[8][1] = y * spacing.y;
+        vertices[8][2] = (z + interpolate(values[0], values[4], isovalue, 0.0f, 1.0f)) * spacing.z;
     }
     if (edges & 0x200) {
-        vertices[9][0] = x + 1;
-        vertices[9][1] = y;
-        vertices[9][2] = z + interpolate(values[1], values[5], isovalue, 0.0f, 1.0f);
+        vertices[9][0] = (x + 1) * spacing.x;
+        vertices[9][1] = y * spacing.y;
+        vertices[9][2] = (z + interpolate(values[1], values[5], isovalue, 0.0f, 1.0f)) * spacing.z;
     }
     if (edges & 0x400) {
-        vertices[10][0] = x + 1;
-        vertices[10][1] = y + 1;
-        vertices[10][2] = z + interpolate(values[2], values[6], isovalue, 0.0f, 1.0f);
+        vertices[10][0] = (x + 1) * spacing.x;
+        vertices[10][1] = (y + 1) * spacing.y;
+        vertices[10][2] = (z + interpolate(values[2], values[6], isovalue, 0.0f, 1.0f)) * spacing.z;
     }
     if (edges & 0x800) {
-        vertices[11][0] = x;
-        vertices[11][1] = y + 1;
-        vertices[11][2] = z + interpolate(values[3], values[7], isovalue, 0.0f, 1.0f);
+        vertices[11][0] = x * spacing.x;
+        vertices[11][1] = (y + 1) * spacing.y;
+        vertices[11][2] = (z + interpolate(values[3], values[7], isovalue, 0.0f, 1.0f)) * spacing.z;
     }
 
     for (int i = 0; triTable[cubeIndex][i] != -1; i += 3) {
@@ -142,7 +142,7 @@ std::vector<Triangle> MarchingCubes::generateSurface(const VolumeData& volumeDat
     for (int z = 0; z < volumeData.depth - 1; ++z) {
         for (int y = 0; y < volumeData.height - 1; ++y) {
             for (int x = 0; x < volumeData.width - 1; ++x) {
-                processCube(volumeData, x, y, z, isovalue, triangles);
+                processCube(volumeData, x, y, z, isovalue, volumeData.spacing, triangles);
             }
         }
     }

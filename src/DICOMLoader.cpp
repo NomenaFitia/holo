@@ -5,18 +5,15 @@
 #include <iostream>
 #include <algorithm>
 
+/*
+Les données dont on a besoin pour représenter un volume 3D : 
+- Pixel Spacing (0028,0030) – [X, Y] : donne l'espacement physique entre les pixels dans le plan XY. (2D) en mm
+- Slice Thickness (0018,0050) : donne l'épaisseur de chaque coupe dans la direction Z. en mm
+- Spacing Between Slices (0018,0088) – espacement réel entre slices si présent 
+- Image Position (Patient) (0020,0032) : position de l'image dans l'espace patient, utile pour déterminer la position de chaque slice dans le volume 3D.
+- Image Orientation (Patient) (0020,0037) : orientation de l'image dans l'espace patient, utile pour déterminer l'orientation des slices.
+*/
 namespace fs = std::filesystem;
-
-struct DicomSlice {
-    std::string filename;
-    double position;
-    std::vector<uint16_t> pixels;
-};
-
-struct SliceInfo {
-    std::string path;
-    float positionZ;
-};
 
 bool compareSlice(const SliceInfo& a, const SliceInfo& b) {
     return a.positionZ < b.positionZ;
@@ -77,9 +74,30 @@ VolumeData DICOMLoader::loadFromDirectory(const std::string& directoryPath) {
 }
 
 VolumeData DICOMLoader::loadFromDirectoryWithLeap(const std::string& directoryPath, int leap) {
-    if (leap < 0) {
+    if (leap < 0) { // valider un leap 
         throw std::invalid_argument("Leap must be a positive integer.");
     }
+
+
+    OFString pixelSpacingStr;
+    OFString sliceThicknessStr;
+
+    Float64 spacingX = 0.0;
+    Float64 spacingY = 0.0;
+	Float64 spacingZ = 0.0;
+
+
+	// Image Position and Image Orientation can be helful to determine the spatial arrangement of slices
+    OFString imagePositionPatientStr;
+    OFString imageOrientationPatientStr;
+
+    /*
+    Dans notre cas , le slice thickness corrspond à la position Z de chaque slice.
+    */
+
+    double rescaleSlope;
+	double rescaleIntercept;
+
 
     std::vector<DicomSlice> allSlices;
 
@@ -89,8 +107,22 @@ VolumeData DICOMLoader::loadFromDirectoryWithLeap(const std::string& directoryPa
             if (file.loadFile(entry.path().string().c_str()).good()) {
                 DcmDataset* dataset = file.getDataset();
 
+                
                 double sliceLocation = 0.0;
                 dataset->findAndGetFloat64(DCM_SliceLocation, sliceLocation);
+                
+				// check first file for pixel spacing and slice thickness
+
+                if (pixelSpacingStr.empty() 
+                    || sliceThicknessStr.empty()
+                    || (spacingX == 0.0 && spacingY == 0.0)) {
+
+                    dataset->findAndGetFloat64(DCM_PixelSpacing, spacingX, 0);
+                    dataset->findAndGetFloat64(DCM_PixelSpacing, spacingY, 1);
+                    //dataset->findAndGetOFString(DCM_SliceThickness, sliceThicknessStr);
+					dataset->findAndGetFloat64(DCM_SliceThickness, spacingZ);
+                }
+
 
                 DicomImage image(entry.path().string().c_str());
                 if (image.getStatus() == EIS_Normal && image.isMonochrome()) {
@@ -110,12 +142,10 @@ VolumeData DICOMLoader::loadFromDirectoryWithLeap(const std::string& directoryPa
         throw std::runtime_error("No valid DICOM slices found.");
     }
 
-    // Trier selon la position des coupes
     std::sort(allSlices.begin(), allSlices.end(), [](const DicomSlice& a, const DicomSlice& b) {
         return a.position < b.position;
         });
 
-    // Sauter les tranches selon le leap
     std::vector<DicomSlice> slices;
     for (size_t i = 0; i < allSlices.size(); i += leap) {
         slices.push_back(std::move(allSlices[i]));
@@ -136,6 +166,12 @@ VolumeData DICOMLoader::loadFromDirectoryWithLeap(const std::string& directoryPa
         }
     }
 
-    // Retourne le volume avec un "leap" espacement
-    return { volume, width, height, depth};
+	// Convert pixel value in volume to Hounsfield Units (HU) before returning
+
+    //spacingX *= static_cast<double>(leap);
+    //spacingY *= static_cast<double>(leap);
+    spacingZ *= static_cast<double>(leap);
+
+
+    return { volume, width, height, depth, {spacingX, spacingY, spacingZ} };
 }

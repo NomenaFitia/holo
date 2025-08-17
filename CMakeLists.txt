@@ -21,7 +21,7 @@ file(GLOB SOURCES "src/*.cpp")
 file(GLOB HEADERS "include/*.h")
 
 # Exécutable
-add_executable(V2 ${SOURCES} ${HEADERS} "src/main.cpp")
+add_executable(V2 ${SOURCES} ${HEADERS} "src/main.cpp" "include/Utils.h")
 
 # Liaisons
 target_include_directories(V2 PRIVATE ${DCMTK_INCLUDE_DIRS} include)

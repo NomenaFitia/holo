@@ -5,16 +5,27 @@
 #include <DICOMLoader.h>
 #include <DirectXRenderer.h>
 
+/*
+Vérifier les dimenstions 
+
+Choisir une unité de mmesure et faire correspondre les coordonnées des points
+
+appliquer une réduction du nombre de voxels en adaptant les dimensions
+
+
+Créer une struct pour les dimensions réelles des voxels : utiliser dcmtk pour obtenir les tags
+*/
 
 int main() 
 {
     std::string directoryPath = "C:\\projects\\dcmfiles";
 	float isovalue = 0.5f;
-	int leap = 1;
+	int leap = 10;
+	//VoxelSpacing spacing;
 
     try {
 		DICOMLoader loader;
-		VolumeData volume = loader.loadFromDirectoryWithLeap(directoryPath, leap);
+		VolumeData volume = loader.loadFromDirectoryWithLeap(directoryPath, leap); // diviser pré-traitement et génération de la surface
 
 		auto triangles = MarchingCubes::generateSurface(volume, 30000);
 		//MarchingCubes::saveToObj(triangles, "output.obj");
