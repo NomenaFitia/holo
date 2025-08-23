@@ -3,16 +3,12 @@
 #include <filesystem>
 #include <fstream>
 #include <DICOMLoader.h>
-#include <DirectXRenderer.h>
+#include <MarchingCubes.h>
 
 /*
 Vérifier les dimenstions 
-
 Choisir une unité de mmesure et faire correspondre les coordonnées des points
-
 appliquer une réduction du nombre de voxels en adaptant les dimensions
-
-
 Créer une struct pour les dimensions réelles des voxels : utiliser dcmtk pour obtenir les tags
 */
 
@@ -23,6 +19,20 @@ int main()
 	int leap = 10;
 	//VoxelSpacing spacing;
 
+
+	/*
+	
+	Créer le volume 
+
+	Segmenter le volume 
+
+	Créer les surfaces 
+
+	Raffiner la surface
+
+	Exporter la surface en .obj
+
+	*/
     try {
 		DICOMLoader loader;
 		VolumeData volume = loader.loadFromDirectoryWithLeap(directoryPath, leap); // diviser pré-traitement et génération de la surface

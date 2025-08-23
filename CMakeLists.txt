@@ -10,14 +10,11 @@ if(DEFINED ENV{VCPKG_ROOT})
         CACHE STRING "")
 endif()
 
-# Trouver DCMTK et DirectX 11
+# Trouver DCMTK
 find_package(DCMTK REQUIRED)
-find_package(Directxtk REQUIRED)
-find_package(OpenXR REQUIRED)
-find_package(assimp REQUIRED)
 
 # Fichiers sources
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "utils/*")
 file(GLOB HEADERS "include/*.h")
 
 # Exécutable
@@ -30,8 +27,4 @@ target_link_libraries(V2 PRIVATE DCMTK::dcmdata
     DCMTK::oflog
     DCMTK::dcmimgle
     DCMTK::dcmimage
-    d3d11.lib 
-    dxgi.lib
-    OpenXR::openxr_loader
-    assimp::assimp
 )
